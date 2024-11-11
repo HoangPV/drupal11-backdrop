@@ -1,0 +1,59 @@
+version: '3'
+
+services:
+  # Nginx reverse proxy
+  nginx-proxy:
+    image: nginx:latest
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - drupal-apache2
+      - backdrop-apache2
+    restart: always
+
+  # MySQL database
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: cmsdb
+      MYSQL_USER: cmsuser
+      MYSQL_PASSWORD: cmspass
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    restart: always
+
+  # Drupal 11
+  drupal-apache2:
+    build:
+      context: .
+      dockerfile: Dockerfile-drupal
+    volumes:
+      - ./drupal-src:/var/www/html
+      - ./drupal.conf:/etc/apache2/sites-available/000-default.conf
+    environment:
+      DRUPAL_DB_HOST: db
+      DRUPAL_DB_USER: drupaluser
+      DRUPAL_DB_PASSWORD: drupalpass
+      DRUPAL_DB_NAME: drupaldb
+    restart: always
+
+  # Backdrop CMS
+  backdrop-apache2:
+    build:
+      context: .
+      dockerfile: Dockerfile-backdrop
+    volumes:
+      - ./backdrop-src:/var/www/html
+    environment:
+      BACKDROP_DB_HOST: db
+      BACKDROP_DB_USER: cmsuser
+      BACKDROP_DB_PASSWORD: cmspass
+      BACKDROP_DB_NAME: cmsdb
+    restart: always
+
+volumes:
+  db_data:

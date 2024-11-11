@@ -1,0 +1,4 @@
+CREATE DATABASE IF NOT EXISTS drupaldb;
+CREATE USER IF NOT EXISTS 'drupaluser'@'%' IDENTIFIED BY 'drupalpass';
+GRANT ALL PRIVILEGES ON drupaldb.* TO 'drupaluser'@'%';
+FLUSH PRIVILEGES;

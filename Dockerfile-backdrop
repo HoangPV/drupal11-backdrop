@@ -1,0 +1,27 @@
+FROM php:8.1-apache
+
+# Install required PHP extensions
+RUN apt-get update && apt-get install -y \
+    libfreetype6-dev \
+    libjpeg62-turbo-dev \
+    libpng-dev \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install -j$(nproc) gd pdo pdo_mysql
+
+# Enable Apache mod_rewrite
+RUN a2enmod rewrite
+
+# Set correct permissions
+RUN chown -R www-data:www-data /var/www/html
+
+# Copy custom entrypoint script
+COPY backdrop-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/backdrop-entrypoint.sh
+
+# Create settings.php file with correct permission
+RUN touch /var/www/html/settings.php && \
+    chown www-data:www-data /var/www/html/settings.php && \
+    chmod a+w /var/www/html/settings.php
+
+ENTRYPOINT ["backdrop-entrypoint.sh"]
+CMD ["apache2-foreground"]
